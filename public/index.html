@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User CRUD App</title>
+</head>
+<body>
+    <h1>MongoDB CRUD App</h1>
+
+    <form id="userForm">
+        <label>First Name: <input type="text" id="firstname" required></label><br>
+        <label>Last Name: <input type="text" id="lastname" required></label><br>
+        <label>City: <input type="text" id="city" required></label><br>
+        <button type="submit">Create User</button>
+    </form>
+
+    <h2>Users:</h2>
+    <ul id="userList"></ul>
+
+    <script>
+        document.getElementById('userForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const firstname = document.getElementById('firstname').value;
+            const lastname = document.getElementById('lastname').value;
+            const city = document.getElementById('city').value;
+
+            fetch('/user', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ firstname, lastname, city })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('User created:', data);
+                loadUsers();
+            });
+        });
+
+        function loadUsers() {
+            fetch('/users')
+            .then(response => response.json())
+            .then(users => {
+                const userList = document.getElementById('userList');
+                userList.innerHTML = '';
+                users.forEach(user => {
+                    const li = document.createElement('li');
+                    li.textContent = `${user.firstname} ${user.lastname} (${user.city})`;
+                    
+                    // Create a delete button
+                    const deleteButton = document.createElement('button');
+                    deleteButton.textContent = 'Delete';
+                    deleteButton.addEventListener('click', function() {
+                        deleteUser(user._id);
+                    });
+                    
+                    // Append the delete button to the list item
+                    li.appendChild(deleteButton);
+                    
+                    userList.appendChild(li);
+                });
+            });
+        }
+
+        function deleteUser(userId) {
+            fetch(`/user/${userId}`, {
+                method: 'DELETE'
+            })
+            .then(response => {
+                if (response.ok) {
+                    console.log('User deleted');
+                    loadUsers();
+                } else {
+                    console.error('Failed to delete user');
+                }
+            });
+        }
+
+        loadUsers();
+    </script>
+</body>
+</html>
